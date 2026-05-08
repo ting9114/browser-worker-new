@@ -1,0 +1,19 @@
+services:
+  browser-worker:
+    build: .
+    container_name: browser-worker
+    restart: unless-stopped
+    platform: linux/amd64
+    shm_size: 2gb
+    mem_limit: 6g
+    environment:
+      - PORT=${PORT:-3001}
+    ports:
+      - ${PORT:-3001}:${PORT:-3001}
+    volumes:
+      - browser_profiles:/app/profiles
+      - browser_debug:/app/debug
+
+volumes:
+  browser_profiles:
+  browser_debug:
