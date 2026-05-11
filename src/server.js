@@ -303,9 +303,8 @@ async function executeStep(session, step) {
         mkdirSync(uploadDir, { recursive: true });
         const filePath = join(uploadDir, filename);
         writeFileSync(filePath, Buffer.from(fileBase64, 'base64'));
-        await page.setInputFiles(selector, filePath, { force });
-        // Dispatch a native change event so jQuery/custom widget handlers pick it up
-        try { await page.dispatchEvent(selector, 'change', {}, { force }); } catch {}
+        await page.setInputFiles(selector, filePath, { force: true });
+        try { await page.dispatchEvent(selector, 'change', {}, { force: true }); } catch {}
         try { unlinkSync(filePath); } catch {}
         return { uploaded: filename };
       }
