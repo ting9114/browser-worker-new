@@ -294,20 +294,17 @@ async function executeStep(session, step) {
         return { screenshot: buf.toString('base64') };
       }
       case 'uploadFile': {
-        // Accepts a base64-encoded file and uploads it to a file input element.
-        // params: { selector, filename, base64, force }
-        // force: true bypasses Playwright visibility checks (needed for CSS-hidden inputs in custom widgets)
-        const { selector, filename = 'upload.csv', base64: fileBase64, force = true } = params;
-        if (!fileBase64) throw new Error('uploadFile: base64 param is required');
-        const uploadDir = '/tmp/bw-uploads';
-        mkdirSync(uploadDir, { recursive: true });
-        const filePath = join(uploadDir, filename);
-        writeFileSync(filePath, Buffer.from(fileBase64, 'base64'));
-        await page.setInputFiles(selector, filePath, { force: true });
-        try { await page.dispatchEvent(selector, 'change', {}, { force: true }); } catch {}
-        try { unlinkSync(filePath); } catch {}
-        return { uploaded: filename };
-      }
+      const { selector, filename = 'upload.csv', base64: fileBase64, force = true } = params;
+      if (!fileBase64) throw new Error('uploadFile: base64 param is required');
+      const uploadDir = '/tmp/bw-uploads';
+      mkdirSync(uploadDir, { recursive: true });
+      const filePath = join(uploadDir, filename);
+      writeFileSync(filePath, Buffer.from(fileBase64, 'base64'));
+      await page.setInputFiles(selector, filePath, { force });          // ← force: true added
+      try { await page.dispatchEvent(selector, 'change', {}, { force }); } catch {} // ← added
+      try { unlinkSync(filePath); } catch {}
+      return { uploaded: filename };
+    }
       case 'getCookies':
         return { cookies: await context.cookies() };
       case 'setCookies':
