@@ -6,7 +6,6 @@ import { join } from 'path';
 import { resolveAdPatterns } from './ad-patterns.js';
 
 const app = express();
-const HOST = '0.0.0.0';
 app.use(express.json());
 
 // session id -> { sessionId, browser, context, page, ttl, timer, forceHttpHosts: Set<string>, blockAds, forceHttp }
@@ -296,14 +295,17 @@ async function executeStep(session, step) {
       }
       case 'uploadFile': {
         // Accepts a base64-encoded file and uploads it to a file input element.
-        // params: { selector, filename, base64 }
-        const { selector, filename = 'upload.csv', base64: fileBase64 } = params;
+        // params: { selector, filename, base64, force }
+        // force: true bypasses Playwright visibility checks (needed for CSS-hidden inputs in custom widgets)
+        const { selector, filename = 'upload.csv', base64: fileBase64, force = true } = params;
         if (!fileBase64) throw new Error('uploadFile: base64 param is required');
         const uploadDir = '/tmp/bw-uploads';
         mkdirSync(uploadDir, { recursive: true });
         const filePath = join(uploadDir, filename);
         writeFileSync(filePath, Buffer.from(fileBase64, 'base64'));
-        await page.setInputFiles(selector, filePath);
+        await page.setInputFiles(selector, filePath, { force });
+        // Dispatch a native change event so jQuery/custom widget handlers pick it up
+        try { await page.dispatchEvent(selector, 'change', {}, { force }); } catch {}
         try { unlinkSync(filePath); } catch {}
         return { uploaded: filename };
       }
@@ -760,7 +762,7 @@ app.delete('/sessions/:id', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, HOST, () => console.log(`Worker ready on :${PORT}`));
+app.listen(PORT, () => console.log(`Worker ready on :${PORT}`));
 
 process.on('uncaughtException', (err) => {
   console.error('[FATAL] uncaughtException:', err);
