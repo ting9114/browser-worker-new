@@ -6,7 +6,7 @@ import { join } from 'path';
 import { resolveAdPatterns } from './ad-patterns.js';
 
 const app = express();
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
 
 // session id -> { sessionId, browser, context, page, ttl, timer, forceHttpHosts: Set<string>, blockAds, forceHttp }
 const sessions = new Map();
